@@ -19,15 +19,13 @@ RUN dotnet publish octo-fiesta/octo-fiesta.csproj -c Release -p:Version=$VERSION
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 
-# Install ffmpeg and yt-dlp for the YouTube provider
-# ffmpeg: audio conversion (required by yt-dlp's --audio-format flag)
-# yt-dlp: installed via pip to always get the latest version (apt package lags behind)
+# Install ffmpeg for audio conversion and download the yt-dlp standalone binary.
+# Using the standalone binary avoids installing python3 + pip, which significantly
+# speeds up the Docker build. The binary supports `yt-dlp -U` self-updates at runtime.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        ffmpeg \
-        python3 \
-        python3-pip && \
-    pip3 install --no-cache-dir --break-system-packages yt-dlp && \
+    apt-get install -y --no-install-recommends ffmpeg curl && \
+    curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
+    chmod +x /usr/local/bin/yt-dlp && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
