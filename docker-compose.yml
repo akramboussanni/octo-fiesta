@@ -56,5 +56,17 @@ services:
       # Instance timeout in seconds for Tidal backend (default: 5)
       # Switches to next instance if current one doesn't respond in time
       - SquidWTF__InstanceTimeoutSeconds=${SQUIDWTF_INSTANCE_TIMEOUT:-5}
+      
+      # ===== YOUTUBE SETTINGS =====
+      # YouTube Data API v3 key (required if using YouTube)
+      - YouTube__ApiKey=${YOUTUBE_API_KEY:-}
+      # Path to yt-dlp executable (default: yt-dlp — must be on PATH or installed)
+      - YouTube__YtDlpPath=${YOUTUBE_YTDLP_PATH:-yt-dlp}
+      # Audio format: mp3, m4a, opus, vorbis, flac (default: mp3; requires ffmpeg)
+      - YouTube__AudioFormat=${YOUTUBE_AUDIO_FORMAT:-mp3}
+      # Audio quality 0 (best) – 9 (worst) for lossy formats (default: 0)
+      - YouTube__AudioQuality=${YOUTUBE_AUDIO_QUALITY:-0}
+      # Music-only filter using YouTube topic ID /m/04rlf (default: true)
+      - YouTube__MusicOnly=${YOUTUBE_MUSIC_ONLY:-true}
     volumes:
       - ${DOWNLOAD_PATH:-./downloads}:/app/downloads

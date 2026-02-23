@@ -75,7 +75,13 @@ public enum MusicService
     /// <summary>
     /// SquidWTF music service (supports Qobuz and Tidal backends)
     /// </summary>
-    SquidWTF
+    SquidWTF,
+    
+    /// <summary>
+    /// YouTube music service — uses YouTube Data API v3 for search/metadata
+    /// and yt-dlp + ffmpeg for audio downloading.
+    /// </summary>
+    YouTube
 }
 
 public class SubsonicSettings

@@ -3,6 +3,7 @@ using octo_fiesta.Services;
 using octo_fiesta.Services.Deezer;
 using octo_fiesta.Services.Qobuz;
 using octo_fiesta.Services.SquidWTF;
+using octo_fiesta.Services.YouTube;
 using octo_fiesta.Services.Local;
 using octo_fiesta.Services.Validation;
 using octo_fiesta.Services.Subsonic;
@@ -32,6 +33,8 @@ builder.Services.Configure<QobuzSettings>(
     builder.Configuration.GetSection("Qobuz"));
 builder.Services.Configure<SquidWTFSettings>(
     builder.Configuration.GetSection("SquidWTF"));
+builder.Services.Configure<YouTubeSettings>(
+    builder.Configuration.GetSection("YouTube"));
 
 // Get the configured music service from bound settings (to respect default values)
 var subsonicSettings = new SubsonicSettings();
@@ -85,6 +88,17 @@ else if (musicService == MusicService.SquidWTF)
     builder.Services.AddSingleton<IMusicMetadataService, SquidWTFMetadataService>();
     builder.Services.AddSingleton<IDownloadService, SquidWTFDownloadService>();
 }
+else if (musicService == MusicService.YouTube)
+{
+    // YouTube services — no secondary playlist provider needed
+    if (enableExternalPlaylists)
+    {
+        builder.Services.AddSingleton<PlaylistSyncService>();
+    }
+
+    builder.Services.AddSingleton<IMusicMetadataService, YouTubeMetadataService>();
+    builder.Services.AddSingleton<IDownloadService, YouTubeDownloadService>();
+}
 else
 {
     // If playlists enabled, register Qobuz FIRST (secondary provider)
@@ -106,6 +120,7 @@ builder.Services.AddSingleton<IStartupValidator, SubsonicStartupValidator>();
 builder.Services.AddSingleton<IStartupValidator, DeezerStartupValidator>();
 builder.Services.AddSingleton<IStartupValidator, QobuzStartupValidator>();
 builder.Services.AddSingleton<IStartupValidator, SquidWTFStartupValidator>();
+builder.Services.AddSingleton<IStartupValidator, YouTubeStartupValidator>();
 
 // Register orchestrator as hosted service
 builder.Services.AddHostedService<StartupValidationOrchestrator>();
