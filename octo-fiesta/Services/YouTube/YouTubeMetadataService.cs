@@ -1,3 +1,4 @@
+using System.Net;
 using octo_fiesta.Models.Domain;
 using octo_fiesta.Models.Settings;
 using octo_fiesta.Models.Download;
@@ -519,10 +520,10 @@ public class YouTubeMetadataService : IMusicMetadataService
     private static Song ParseSearchResultVideo(JsonElement item, string videoId)
     {
         var snippet = item.TryGetProperty("snippet", out var s) ? s : default;
-        var title = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("title", out var t)
-            ? t.GetString() ?? "" : "";
-        var channelTitle = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelTitle", out var ct)
-            ? ct.GetString() ?? "" : "";
+        var title = Decode(snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("title", out var t)
+            ? t.GetString() ?? "" : "");
+        var channelTitle = Decode(snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelTitle", out var ct)
+            ? ct.GetString() ?? "" : "");
         var channelId = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelId", out var ci)
             ? ci.GetString() : null;
 
@@ -552,10 +553,10 @@ public class YouTubeMetadataService : IMusicMetadataService
         var snippet = item.TryGetProperty("snippet", out var s) ? s : default;
         var contentDetails = item.TryGetProperty("contentDetails", out var cd) ? cd : default;
 
-        var title = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("title", out var t)
-            ? t.GetString() ?? "" : "";
-        var channelTitle = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelTitle", out var ct)
-            ? ct.GetString() ?? "" : "";
+        var title = Decode(snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("title", out var t)
+            ? t.GetString() ?? "" : "");
+        var channelTitle = Decode(snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelTitle", out var ct)
+            ? ct.GetString() ?? "" : "");
         var channelId = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelId", out var ci)
             ? ci.GetString() : null;
         var description = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("description", out var desc)
@@ -594,10 +595,10 @@ public class YouTubeMetadataService : IMusicMetadataService
     private static Album ParseSearchResultPlaylistAsAlbum(JsonElement item, string playlistId)
     {
         var snippet = item.TryGetProperty("snippet", out var s) ? s : default;
-        var title = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("title", out var t)
-            ? t.GetString() ?? "" : "";
-        var channelTitle = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelTitle", out var ct)
-            ? ct.GetString() ?? "" : "";
+        var title = Decode(snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("title", out var t)
+            ? t.GetString() ?? "" : "");
+        var channelTitle = Decode(snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelTitle", out var ct)
+            ? ct.GetString() ?? "" : "");
         var channelId = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelId", out var ci)
             ? ci.GetString() : null;
 
@@ -622,10 +623,10 @@ public class YouTubeMetadataService : IMusicMetadataService
         var snippet = item.TryGetProperty("snippet", out var s) ? s : default;
         var contentDetails = item.TryGetProperty("contentDetails", out var cd) ? cd : default;
 
-        var title = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("title", out var t)
-            ? t.GetString() ?? "" : "";
-        var channelTitle = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelTitle", out var ct)
-            ? ct.GetString() ?? "" : "";
+        var title = Decode(snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("title", out var t)
+            ? t.GetString() ?? "" : "");
+        var channelTitle = Decode(snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelTitle", out var ct)
+            ? ct.GetString() ?? "" : "");
         var channelId = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelId", out var ci)
             ? ci.GetString() : null;
 
@@ -657,10 +658,10 @@ public class YouTubeMetadataService : IMusicMetadataService
     private static Artist ParseSearchResultChannel(JsonElement item, string channelId)
     {
         var snippet = item.TryGetProperty("snippet", out var s) ? s : default;
-        var title = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelTitle", out var ct)
+        var title = Decode(snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelTitle", out var ct)
             ? ct.GetString() ?? ""
             : (snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("title", out var t)
-                ? t.GetString() ?? "" : "");
+                ? t.GetString() ?? "" : ""));
 
         var (thumbMedium, _) = GetThumbnails(snippet);
 
@@ -681,8 +682,8 @@ public class YouTubeMetadataService : IMusicMetadataService
         var snippet = item.TryGetProperty("snippet", out var s) ? s : default;
         var statistics = item.TryGetProperty("statistics", out var stats) ? stats : default;
 
-        var name = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("title", out var t)
-            ? t.GetString() ?? "" : "";
+        var name = Decode(snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("title", out var t)
+            ? t.GetString() ?? "" : "");
 
         var (thumbMedium, _) = GetThumbnails(snippet);
 
@@ -703,12 +704,12 @@ public class YouTubeMetadataService : IMusicMetadataService
         var snippet = item.TryGetProperty("snippet", out var s) ? s : default;
         var contentDetails = item.TryGetProperty("contentDetails", out var cd) ? cd : default;
 
-        var title = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("title", out var t)
-            ? t.GetString() ?? "" : "";
+        var title = Decode(snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("title", out var t)
+            ? t.GetString() ?? "" : "");
         var description = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("description", out var desc)
             ? desc.GetString() : null;
-        var channelTitle = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelTitle", out var ct)
-            ? ct.GetString() : null;
+        var channelTitle = Decode(snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelTitle", out var ct)
+            ? ct.GetString() : null);
 
         int itemCount = contentDetails.ValueKind != JsonValueKind.Undefined &&
                         contentDetails.TryGetProperty("itemCount", out var ic)
@@ -744,10 +745,10 @@ public class YouTubeMetadataService : IMusicMetadataService
     {
         var snippet = item.TryGetProperty("snippet", out var s) ? s : default;
 
-        var title = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("title", out var t)
-            ? t.GetString() ?? "" : "";
-        var channelTitle = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelTitle", out var ct)
-            ? ct.GetString() : null;
+        var title = Decode(snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("title", out var t)
+            ? t.GetString() ?? "" : "");
+        var channelTitle = Decode(snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("channelTitle", out var ct)
+            ? ct.GetString() : null);
         var description = snippet.ValueKind != JsonValueKind.Undefined && snippet.TryGetProperty("description", out var desc)
             ? desc.GetString() : null;
 
@@ -768,6 +769,12 @@ public class YouTubeMetadataService : IMusicMetadataService
     }
 
     // ─────────────────────────── Static utility ───────────────────────────
+
+    /// <summary>
+    /// Decodes HTML entities returned by the YouTube Data API in snippet text fields.
+    /// e.g. "&amp;" → "&", "&#39;" → "'", "&quot;" → '"'
+    /// </summary>
+    private static string Decode(string? value) => WebUtility.HtmlDecode(value) ?? "";
 
     /// <summary>
     /// Returns (medium, high) thumbnail URLs from a snippet element.
