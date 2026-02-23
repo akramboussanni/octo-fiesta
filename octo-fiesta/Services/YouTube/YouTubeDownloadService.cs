@@ -12,6 +12,26 @@ using IOFile = System.IO.File;
 
 namespace octo_fiesta.Services.YouTube;
 
+// yt-dlp error messages that indicate the video is unavailable in this region/account.
+// These are not transient failures — retrying the same ID will always fail.
+file static class YtDlpUnavailableMessages
+{
+    internal static readonly string[] Fragments =
+    [
+        "this video is not available",
+        "video unavailable",
+        "this video has been removed",
+        "this video is private",
+        "who has the link can watch",
+        "age-restricted",
+        "not available in your country",
+        "has been restricted"
+    ];
+
+    internal static bool IsUnavailable(string errorMessage) =>
+        Fragments.Any(f => errorMessage.Contains(f, StringComparison.OrdinalIgnoreCase));
+}
+
 /// <summary>
 /// Download service for YouTube using yt-dlp.
 /// Requires yt-dlp and ffmpeg to be installed on the system/PATH.
@@ -22,6 +42,7 @@ public class YouTubeDownloadService : BaseDownloadService
     private readonly string _ytDlpPath;
     private readonly string _audioFormat;
     private readonly string _audioQuality;
+    private readonly YouTubeMetadataService _youtubeMetadata;
 
     protected override string ProviderName => "youtube";
 
@@ -40,6 +61,8 @@ public class YouTubeDownloadService : BaseDownloadService
         _ytDlpPath = string.IsNullOrWhiteSpace(yt.YtDlpPath) ? "yt-dlp" : yt.YtDlpPath;
         _audioFormat = NormalizeAudioFormat(yt.AudioFormat);
         _audioQuality = string.IsNullOrWhiteSpace(yt.AudioQuality) ? "0" : yt.AudioQuality;
+        // Cast is safe — YouTube provider always wires YouTubeMetadataService as IMusicMetadataService
+        _youtubeMetadata = (YouTubeMetadataService)metadataService;
     }
 
     // ─────────────────────────── BaseDownloadService Implementation ───────────────────────────
@@ -69,29 +92,62 @@ public class YouTubeDownloadService : BaseDownloadService
     protected override async Task<DownloadResult> DownloadTrackAsync(
         string trackId, Song song, CancellationToken cancellationToken)
     {
-        var videoUrl = $"https://www.youtube.com/watch?v={trackId}";
+        Logger.LogInformation("Downloading YouTube track {TrackId}: {Title} - {Artist}", trackId, song.Title, song.Artist);
+        return await DownloadFromVideoIdAsync(trackId, song, cancellationToken);
+    }
+
+    /// <summary>
+    /// Downloads audio for <paramref name="videoId"/>.
+    /// If yt-dlp reports the video as unavailable (geo-blocked, removed, private, …)
+    /// it falls back to a YouTube search for "artist title" and retries the first result.
+    /// </summary>
+    private async Task<DownloadResult> DownloadFromVideoIdAsync(
+        string videoId, Song song, CancellationToken cancellationToken, bool isFallback = false)
+    {
+        var videoUrl = $"https://www.youtube.com/watch?v={videoId}";
         var extension = GetExtensionForFormat(_audioFormat);
 
         // Use a temp directory for staging so yt-dlp's intermediate files don't land in the library
-        var tempDir = Path.Combine(Path.GetTempPath(), $"octo-fiesta-yt-{trackId}");
+        var tempDir = Path.Combine(Path.GetTempPath(), $"octo-fiesta-yt-{videoId}");
         Directory.CreateDirectory(tempDir);
 
-        // yt-dlp will create: {tempDir}/{trackId}.{ext}
-        var tempOutputTemplate = Path.Combine(tempDir, $"{trackId}.%(ext)s");
+        // yt-dlp will create: {tempDir}/{videoId}.{ext}
+        var tempOutputTemplate = Path.Combine(tempDir, $"{videoId}.%(ext)s");
 
         try
         {
-            Logger.LogInformation("Downloading YouTube track {TrackId}: {Title} - {Artist}", trackId, song.Title, song.Artist);
-
             var args = BuildYtDlpArguments(videoUrl, tempOutputTemplate);
-            var output = await RunYtDlpAsync(args, cancellationToken, timeoutSeconds: 600);
+            string output;
+            try
+            {
+                output = await RunYtDlpAsync(args, cancellationToken, timeoutSeconds: 600);
+            }
+            catch (InvalidOperationException ex) when (!isFallback && YtDlpUnavailableMessages.IsUnavailable(ex.Message))
+            {
+                // The exact video is unavailable in this region — try to find an alternative.
+                Logger.LogWarning(
+                    "Video {VideoId} is unavailable ({Reason}). Searching for a fallback.",
+                    videoId, ex.Message.Split('\n')[0].Trim());
+
+                var fallbackId = await FindFallbackVideoIdAsync(song, cancellationToken);
+                if (fallbackId == null)
+                    throw new InvalidOperationException(
+                        $"Video {videoId} is unavailable and no fallback could be found for '{song.Title}' by '{song.Artist}'.", ex);
+
+                Logger.LogInformation("Using fallback video {FallbackId} for '{Title}'", fallbackId, song.Title);
+
+                // Clean up this temp dir before recursing
+                try { Directory.Delete(tempDir, recursive: true); } catch { /* ignore */ }
+
+                return await DownloadFromVideoIdAsync(fallbackId, song, cancellationToken, isFallback: true);
+            }
 
             Logger.LogDebug("yt-dlp output: {Output}", output);
 
             // Locate the downloaded file — yt-dlp may produce a different extension if conversion failed
-            var downloadedFile = FindDownloadedFile(tempDir, trackId, extension);
+            var downloadedFile = FindDownloadedFile(tempDir, videoId, extension);
             if (downloadedFile == null)
-                throw new FileNotFoundException($"yt-dlp completed but no output file found in {tempDir} for video {trackId}");
+                throw new FileNotFoundException($"yt-dlp completed but no output file found in {tempDir} for video {videoId}");
 
             var actualExtension = Path.GetExtension(downloadedFile);
 
@@ -125,6 +181,29 @@ public class YouTubeDownloadService : BaseDownloadService
             {
                 Logger.LogWarning(ex, "Failed to clean up temp directory: {TempDir}", tempDir);
             }
+        }
+    }
+
+    /// <summary>
+    /// Searches YouTube for the song by "artist title" and returns the first video ID found,
+    /// or <c>null</c> if no results are available.
+    /// </summary>
+    private async Task<string?> FindFallbackVideoIdAsync(Song song, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var query = string.IsNullOrWhiteSpace(song.Artist)
+                ? song.Title
+                : $"{song.Artist} {song.Title}";
+
+            Logger.LogDebug("Searching YouTube for fallback: {Query}", query);
+            var results = await _youtubeMetadata.SearchSongsAsync(query, limit: 5);
+            return results.FirstOrDefault()?.ExternalId;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Fallback search failed for '{Title}' by '{Artist}'", song.Title, song.Artist);
+            return null;
         }
     }
 
