@@ -24,7 +24,7 @@ WORKDIR /app
 # speeds up the Docker build. The binary supports `yt-dlp -U` self-updates at runtime.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ffmpeg curl && \
-    curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && \
+    curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux -o /usr/local/bin/yt-dlp && \
     chmod +x /usr/local/bin/yt-dlp && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*

@@ -106,7 +106,7 @@ public class SubsonicSettings
     /// <summary>
     /// Music service to use (default: SquidWTF)
     /// Environment variable: MUSIC_SERVICE
-    /// Values: "Deezer", "Qobuz", "SquidWTF"
+    /// Values: "Deezer", "Qobuz", "SquidWTF", "YouTube"
     /// </summary>
     public MusicService MusicService { get; set; } = MusicService.SquidWTF;
     

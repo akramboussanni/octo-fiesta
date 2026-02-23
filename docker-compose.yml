@@ -9,11 +9,11 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       # Download path inside container
       - Library__DownloadPath=/app/downloads
-      
+
       # ===== SUBSONIC SETTINGS =====
       # Navidrome/Subsonic server URL
       - Subsonic__Url=${SUBSONIC_URL:-http://localhost:4533}
-      # Music service to use: Deezer, Qobuz, or SquidWTF (default: SquidWTF)
+      # Music service to use: Deezer, Qobuz, SquidWTF, or YouTube (default: SquidWTF)
       - Subsonic__MusicService=${MUSIC_SERVICE:-SquidWTF}
       # Storage mode: Permanent (saved to library), Cache (temporary, auto-cleanup)
       - Subsonic__StorageMode=${STORAGE_MODE:-Permanent}
@@ -29,7 +29,7 @@ services:
       - Subsonic__DownloadMode=${DOWNLOAD_MODE:-Track}
       # Auto upgrade quality: re-download tracks when higher quality is available (default: false)
       - Subsonic__AutoUpgradeQuality=${AUTO_UPGRADE_QUALITY:-false}
-      
+
       # ===== DEEZER SETTINGS =====
       # Deezer ARL token (required if using Deezer)
       - Deezer__Arl=${DEEZER_ARL:-}
@@ -37,7 +37,7 @@ services:
       - Deezer__ArlFallback=${DEEZER_ARL_FALLBACK:-}
       # Preferred audio quality: FLAC, MP3_320, MP3_128 (optional, defaults to highest available)
       - Deezer__Quality=${DEEZER_QUALITY:-}
-      
+
       # ===== QOBUZ SETTINGS =====
       # Qobuz user authentication token (required if using Qobuz)
       - Qobuz__UserAuthToken=${QOBUZ_USER_AUTH_TOKEN:-}
@@ -45,7 +45,7 @@ services:
       - Qobuz__UserId=${QOBUZ_USER_ID:-}
       # Preferred audio quality: FLAC, FLAC_24_HIGH, FLAC_24_LOW, FLAC_16, MP3_320 (optional)
       - Qobuz__Quality=${QOBUZ_QUALITY:-}
-      
+
       # ===== SQUIDWTF SETTINGS =====
       # Backend source: Qobuz or Tidal (default: Qobuz)
       - SquidWTF__Source=${SQUIDWTF_SOURCE:-Qobuz}
@@ -56,7 +56,7 @@ services:
       # Instance timeout in seconds for Tidal backend (default: 5)
       # Switches to next instance if current one doesn't respond in time
       - SquidWTF__InstanceTimeoutSeconds=${SQUIDWTF_INSTANCE_TIMEOUT:-5}
-      
+
       # ===== YOUTUBE SETTINGS =====
       # YouTube Data API v3 key (required if using YouTube)
       - YouTube__ApiKey=${YOUTUBE_API_KEY:-}
