@@ -14,8 +14,7 @@ namespace octo_fiesta.Services.Subsonic;
 /// </summary>
 public class PlaylistSyncService
 {
-    private readonly IMusicMetadataService _deezerMetadataService;
-    private readonly IMusicMetadataService _qobuzMetadataService;
+    private readonly IEnumerable<IMusicMetadataService> _metadataServices;
     private readonly IEnumerable<IDownloadService> _downloadServices;
     private readonly IConfiguration _configuration;
     private readonly SubsonicSettings _subsonicSettings;
@@ -41,10 +40,7 @@ public class PlaylistSyncService
         IOptions<SubsonicSettings> subsonicSettings,
         ILogger<PlaylistSyncService> logger)
     {
-        // Get Deezer and Qobuz metadata services (optional - may not be registered for SquidWTF)
-        _deezerMetadataService = metadataServices.FirstOrDefault(s => s.GetType().Name.Contains("Deezer"))!;
-        _qobuzMetadataService = metadataServices.FirstOrDefault(s => s.GetType().Name.Contains("Qobuz"))!;
-        
+        _metadataServices = metadataServices;
         _downloadServices = downloadServices;
         _configuration = configuration;
         _subsonicSettings = subsonicSettings.Value;
@@ -68,12 +64,7 @@ public class PlaylistSyncService
     /// </summary>
     private IMusicMetadataService? GetMetadataServiceForProvider(string provider)
     {
-        return provider.ToLower() switch
-        {
-            "deezer" when _deezerMetadataService != null => _deezerMetadataService,
-            "qobuz" when _qobuzMetadataService != null => _qobuzMetadataService,
-            _ => null
-        };
+        return _metadataServices.FirstOrDefault(s => s.GetType().Name.Contains(provider, StringComparison.OrdinalIgnoreCase));
     }
     
     /// <summary>
